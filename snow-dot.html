@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Worcester Snow Forecast</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background: #f4f7fb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    h1 { font-size: 1.4rem; color: #1a1a2e; margin-bottom: 4px; }
+    p.subtitle { color: #555; font-size: 0.9rem; margin-bottom: 24px; }
+    #view { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body>
+  <h1>How Much Snow Might There Be</h1>
+  <p class="subtitle">Each dot represents 1 out of 20 equally likely outcomes</p>
+  <div id="view"></div>
+
+  <form id="snowForm">
+    <label>Please Input how much snow there is going to be</label>
+    <input type="number" id="userGuess" required>
+    <button type="submit">Submit</button>
+  </form>
+  
+
+  <script>
+
+    let results = []
+    let currentTrueValue
+    let round = 0
+
+    function generateRandomDots(){
+      const dots = []
+      for(let i = 0; i < 20; i++){
+        const value = +(Math.random()*22).toFixed(1)
+        dots.push({value})
+      }
+      
+      return dots
+
+    }
+
+    function createSpec(dotValues){
+
+      return{
+         "$schema": "https://vega.github.io/schema/vega/v5.json",
+      "width": 560,
+      "height": 140,
+      "padding": {"left": 10, "right": 10, "top": 10, "bottom": 40},
+
+      "data": [
+        {
+          "name": "dots",
+          "values": dotValues,
+          "transform": [
+            {
+              "type": "dotbin",
+              "field": "value",
+              "step": 1.2
+            },
+            {
+              "type": "stack",
+              "groupby": ["bin"]
+            }
+          ]
+        }
+      ],
+
+      "scales": [
+        {
+          "name": "x",
+          "type": "linear",
+          "domain": [0, 22],
+          "range": "width"
+        },
+        {
+          "name": "y",
+          "type": "linear",
+          "domain": [0, 8],
+          "range": "height"
+        },
+        {
+          "name": "color",
+          "type": "threshold",
+          "domain": [0.1, 1, 2, 4, 6, 8, 12, 18],
+          "range": ["#cce5ff","#99caff","#66afff","#5b8cdb","#4a70b5","#7b5ea7","#5c3d8f","#3b2060","#1a0a3d"]
+        }
+      ],
+
+      "axes": [
+        {
+          "scale": "x",
+          "orient": "bottom",
+          "title": "Snowfall (inches)",
+          "values": [0.1, 1, 2, 4, 6, 8, 12, 18],
+          "labelAngle": 0,
+          "tickColor": "#aaa",
+          "domainColor": "#aaa",
+          "titleFont": "Georgia",
+          "labelFont": "Georgia",
+          "titleFontSize": 12
+        }
+      ],
+
+      "marks": [
+        {
+          "type": "rect",
+          "data": [
+            {"x1": 0,    "x2": 0.1,  "label": "<0.1\n<1%"},
+            {"x1": 0.1,  "x2": 1,    "label": "0.1–1\n6%"},
+            {"x1": 1,    "x2": 2,    "label": "1–2\n17%"},
+            {"x1": 2,    "x2": 4,    "label": "2–4\n12%"},
+            {"x1": 4,    "x2": 6,    "label": "4–6\n11%"},
+            {"x1": 6,    "x2": 8,    "label": "6–8\n15%"},
+            {"x1": 8,    "x2": 12,   "label": "8–12\n21%"},
+            {"x1": 12,   "x2": 18,   "label": "12–18\n12%"},
+            {"x1": 18,   "x2": 22,   "label": "≥18\n6%"}
+          ],
+          "encode": {
+            "enter": {
+              "x":  {"scale": "x", "field": "x1"},
+              "x2": {"scale": "x", "field": "x2"},
+              "y":  {"value": 0},
+              "y2": {"signal": "height"},
+              "fill": {"value": "#e8f0fe"},
+              "stroke": {"value": "#c5d0e8"},
+              "strokeWidth": {"value": 1},
+              "opacity": [
+                {"test": "indexof([0,2,4,6,8], datum._vgid % 9) >= 0", "value": 0.5},
+                {"value": 0.25}
+              ]
+            }
+          }
+        },
+        {
+          "type": "symbol",
+          "from": {"data": "dots"},
+          "encode": {
+            "enter": {
+              "x": {"scale": "x", "field": "bin"},
+              "y": {"scale": "y", "signal": "datum.y0 + 0.5"},
+              "size": {"value": 420},
+              "fill": {"scale": "color", "field": "bin"},
+              "stroke": {"value": "white"},
+              "strokeWidth": {"value": 1.5},
+              "tooltip": {"signal": "datum.bin + ' inches'"}
+            }
+          }
+        }
+      ]
+    }};
+
+    function renderNewRound(){
+      const dots = generateRandomDots()
+      const spec = createSpec(dots)
+      vegaEmbed('#view', spec, {actions: false});
+
+      currentTrueValue = dots[Math.floor(Math.random() * dots.length)].value;
+      round++;
+
+    }
+
+    document.getElementById("snowForm").addEventListener("submit", function(e){
+      e.preventDefault()
+
+      const guess = parseFloat(document.getElementById("userGuess").value)
+
+      results.push({
+        round: round, 
+        guess: guess, 
+        actual: currentTrueValue, 
+        error: Math.abs(guess - currentTrueValue)
+      })
+
+      console.log("results: ", results)
+
+      document.getElementById("userGuess").value = ""
+
+      renderNewRound()
+
+    })
+
+  renderNewRound()
+    
+  </script>
+
+</body>
+</html>
