@@ -19,16 +19,53 @@
   </style>
 </head>
 <body>
-  <h1>How Much Snow Might There Be</h1>
-  <p class="subtitle">Each dot represents 1 out of 20 equally likely outcomes</p>
-  <div id="view"></div>
+  <div>
+    <h1>How Much Snow Might There Be</h1>
+    <div id="view"></div>
 
-  <form id="snowForm">
-    <label>Please Input how much snow there is going to be</label>
-    <input type="number" id="userGuess" required>
-    <button type="submit">Submit</button>
-  </form>
-  
+    <form id="snowForm">
+      <label>Enter the Percantage of Likelyhood of each amount of Snowfall</label>
+      <div class="field">
+        <input type="number" id="userGuess" required>  >.1inch
+        <span>&lt; 0.1 inch</span>
+      </div>
+
+      <div class="field">
+        <input type="number" id="userGuess" required>  0.1 - 1
+        <span>0.1 - 1 inch</span>
+      </div>
+
+      <div class="field"> 
+        <input type="number" id="userGuess" required>  1 - 2 
+        <span>1 - 2 inch</span>
+      </div>
+      
+      <div class="field">
+        <input type="number" id="userGuess" required>  2 - 4
+        <span>2 - 4 inch</span>
+      </div>
+
+      <div class="field">
+        <input type="number" id="userGuess" required>  6 - 8
+      </div>
+
+      <div class="field">
+        <input type="number" id="userGuess" required>  8 - 12
+      </div>
+
+      <div class="field">
+        <input type="number" id="userGuess" required>  12 - 18
+      </div>
+
+      <div class="field">
+        <input type="number" id="userGuess" required> 18
+      </div>
+        
+        
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
 
   <script>
 
