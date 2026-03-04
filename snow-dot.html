@@ -1,53 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Worcester Snow Forecast</title>
+
   <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
+  <!-- Modern simple styling library -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/picocss/2.1.1/pico.min.css">
   <link rel="stylesheet" href="main.css">
-  <style>
-    body {
-      font-family: Georgia, serif;
-      background: #f4f7fb;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
-    }
-    h1 { font-size: 1.4rem; color: #1a1a2e; margin-bottom: 4px; }
-    p.subtitle { color: #555; font-size: 0.9rem; margin-bottom: 24px; }
-    #view { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-  </style>
 </head>
+
 <body>
-  <div>
-    <h1>How Much Snow Might There Be</h1>
-    <p class="subtitle">Each dot represents 1 out of 20 possible storms.</p>
+  <main class="container">
+    <header class="hero">
+      <h1>How Much Snow Might There Be?</h1>
+      <p class="subtitle">Each dot represents <b>1 out of 20</b> possible storms.</p>
 
-    <div id="controls" style="text-align: center; margin-bottom: 20px;">
-      <button id="toggleChart" type="button" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Show Bar Chart</button>
-    </div>
+      <div class="chartControls" role="group" aria-label="Chart controls">
+        <button id="toggleChart" type="button" class="secondary">Show Bar Chart</button>
+      </div>
+    </header>
 
-    <div id="view" style="max-width: 650px;"></div>
+    <section id="viewCard" class="card">
+      <div id="view"></div>
+    </section>
 
-    <form id="snowForm">
-      <label>What do you think? Enter your best guess for the chances (%) of each snowfall amount. Make sure they add up to 100.</label>
+    <section class="card">
+      <form id="snowForm">
+        <label>
+          Drag the sliders to set the chance (%) of each snowfall range.
+          <br />
+          <span class="hint"> Sliders total can’t exceed 100%.</span>
+        </label>
 
-      <div class="field"><span>&lt; 0.1 in</span><input type="number" id="p_lt01" min="0" max="100" step="0.1" placeholder="0" required></div>
-      <div class="field"><span>0.1–1 in</span><input type="number" id="p_01_1" min="0" max="100" step="0.1" placeholder="0" required></div>
-      <div class="field"><span>1–2 in</span><input type="number" id="p_1_2" min="0" max="100" step="0.1" placeholder="0" required></div>
-      <div class="field"><span>2–4 in</span><input type="number" id="p_2_4" min="0" max="100" step="0.1" placeholder="0" required></div>
-      <div class="field"><span>4–6 in</span><input type="number" id="p_4_6" min="0" max="100" step="0.1" placeholder="0" required></div>
-      <div class="field"><span>6–8 in</span><input type="number" id="p_6_8" min="0" max="100" step="0.1" placeholder="0" required></div>
-      <div class="field"><span>8–12 in</span><input type="number" id="p_8_12" min="0" max="100" step="0.1" placeholder="0" required></div>
-      <div class="field"><span>12–18 in</span><input type="number" id="p_12_18" min="0" max="100" step="0.1" placeholder="0" required></div>
-      <div class="field"><span>≥ 18 in</span><input type="number" id="p_ge18" min="0" max="100" step="0.1" placeholder="0" required></div>
+        <div class="btnRow" role="group">
+          <button type="button" id="loadExampleBtn">Load Example Forecast</button>
+          <button type="button" id="resetBtn" class="secondary">Reset</button>
+        </div>
 
-      <div id="sumWarn"></div>
-      <div id="dotSummary" style="font-size:0.9rem; color:#333; margin: 12px 0;"></div>
-      <button type="submit">Check My Forecast</button>
-    </form>
-  </div>
+        <div class="sumRow">
+          <div><b>Total:</b> <span id="sumVal">0</span>%</div>
+          <div class="muted">Remaining: <span id="remainingVal">100</span>%</div>
+        </div>
+
+        <div class="sliderGrid" id="sliders"></div>
+
+        <div id="sumWarn" role="status" aria-live="polite"></div>
+        <div id="dotSummary"></div>
+
+        <button type="submit">Check My Forecast</button>
+      </form>
+    </section>
+  </main>
 
   <script>
     const N_DOTS = 20;
@@ -64,25 +71,53 @@
       { key: "ge18",  label: "≥18",    x: 8 }
     ];
 
-    function getPercentsFromForm() {
-      const ids = [
-        "p_lt01","p_01_1","p_1_2","p_2_4","p_4_6","p_6_8","p_8_12","p_12_18","p_ge18"
-      ];
-      return ids.map(id => {
-        const v = parseFloat(document.getElementById(id).value);
-        return Number.isFinite(v) ? v : 0;
-      });
+    const EXAMPLE = [1, 6, 17, 12, 11, 15, 21, 12, 5]; // sums to 100
+
+    // DOM
+    const sliderContainer = document.getElementById("sliders");
+    const sumValEl = document.getElementById("sumVal");
+    const remainingValEl = document.getElementById("remainingVal");
+    const sumWarnEl = document.getElementById("sumWarn");
+    const dotSummaryEl = document.getElementById("dotSummary");
+    const loadExampleBtn = document.getElementById("loadExampleBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const toggleChartBtn = document.getElementById("toggleChart");
+
+    // Track previous values for budget logic
+    const prev = new Map();
+    let currentChartType = "dots";
+
+    function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+
+    function totalPercent() {
+      const inputs = sliderContainer.querySelectorAll('input[type="range"]');
+      let sum = 0;
+      inputs.forEach(inp => sum += parseInt(inp.value, 10) || 0);
+      return sum;
     }
 
-    // Largest Remainder Method: makes counts sum exactly to N_DOTS
-    function percentsToCounts(percents, n=N_DOTS) {
+    function updateTotalsUI() {
+      const sum = totalPercent();
+      sumValEl.textContent = String(sum);
+      remainingValEl.textContent = String(100 - sum);
+
+      if (sum === 100) {
+        sumWarnEl.textContent = "";
+      } else {
+        sumWarnEl.textContent = `You have ${100 - sum}% remaining to allocate.`;
+      }
+    }
+
+    //  makes counts sum exactly to N_DOTS
+    function percentsToCounts(percents, n = N_DOTS) {
       const raws = percents.map(p => (p * n) / 100);
       const floors = raws.map(r => Math.floor(r));
-      let used = floors.reduce((a,b)=>a+b,0);
+      const used = floors.reduce((a, b) => a + b, 0);
       let remaining = n - used;
 
-      const remainders = raws.map((r,i)=>({ i, frac: r - floors[i] }));
-      remainders.sort((a,b)=>b.frac - a.frac);
+      const remainders = raws
+        .map((r, i) => ({ i, frac: r - floors[i] }))
+        .sort((a, b) => b.frac - a.frac);
 
       const counts = floors.slice();
       for (let k = 0; k < remaining; k++) {
@@ -94,6 +129,7 @@
     function buildDotData(percents) {
       const counts = percentsToCounts(percents, N_DOTS);
       const dots = [];
+
       for (let i = 0; i < BINS.length; i++) {
         for (let j = 0; j < counts[i]; j++) {
           dots.push({
@@ -110,28 +146,17 @@
     function createDotSpec(dotValues) {
       return {
         "$schema": "https://vega.github.io/schema/vega/v5.json",
-        "width": 600,
-        "height": 280,
-        "padding": {"left": 110, "right": 20, "top": 10, "bottom": 10},
+        "width": 620,
+        "height": 300,
+        "padding": { "left": 110, "right": 20, "top": 10, "bottom": 10 },
 
         "data": [
           { "name": "dots", "values": dotValues }
         ],
 
         "scales": [
-          {
-            "name": "x",
-            "type": "linear",
-            "domain": [-0.5, N_DOTS - 0.5],
-            "range": "width"
-          },
-          {
-            "name": "y",
-            "type": "band",
-            "domain": [0,1,2,3,4,5,6,7,8],
-            "range": "height",
-            "padding": 0.25
-          }
+          { "name": "x", "type": "linear", "domain": [-0.5, N_DOTS - 0.5], "range": "width" },
+          { "name": "y", "type": "band", "domain": [0,1,2,3,4,5,6,7,8], "range": "height", "padding": 0.25 }
         ],
 
         "axes": [
@@ -140,7 +165,7 @@
             "orient": "left",
             "title": "Snowfall bin (inches)",
             "values": [0,1,2,3,4,5,6,7,8],
-            "labelExpr": "['<0.1','0.1–1','1–2','2–4','4–6','6–8','8–12','12–18','≥19'][datum.value]",
+            "labelExpr": "['<0.1','0.1–1','1–2','2–4','4–6','6–8','8–12','12–18','≥18'][datum.value]",
             "titleFont": "Georgia",
             "labelFont": "Georgia",
             "titleFontSize": 12
@@ -150,16 +175,19 @@
         "marks": [
           {
             "type": "symbol",
-            "from": {"data": "dots"},
+            "from": { "data": "dots" },
             "encode": {
               "enter": {
-                "x": {"scale": "x", "field": "pos"},
-                "y": {"scale": "y", "field": "binIndex", "band": 0.5},
-                "size": {"value": 220},
-                "fill": {"value": "#6b5b95"},
-                "stroke": {"value": "white"},
-                "strokeWidth": {"value": 1.2},
-                "tooltip": {"signal": "datum.bin + ': ' + datum.p + '% (' + round(datum.p * " + N_DOTS + " / 100) + ' of " + N_DOTS + ")'"}
+                "x": { "scale": "x", "field": "pos" },
+                "y": { "scale": "y", "field": "binIndex", "band": 0.5 },
+                "size": { "value": 220 },
+                "fill": { "value": "#6b5b95" },
+                "stroke": { "value": "white" },
+                "strokeWidth": { "value": 1.2 },
+                "tooltip": {
+                  "signal":
+                    "datum.bin + ': ' + datum.p + '% (≈ ' + round(datum.p * " + N_DOTS + " / 100) + ' of " + N_DOTS + ")'"
+                }
               }
             }
           }
@@ -170,9 +198,9 @@
     function createBarSpec(percents) {
       return {
         "$schema": "https://vega.github.io/schema/vega/v5.json",
-        "width": 600,
-        "height": 280,
-        "padding": {"left": 110, "right": 20, "top": 10, "bottom": 10},
+        "width": 620,
+        "height": 300,
+        "padding": { "left": 110, "right": 20, "top": 10, "bottom": 30 },
 
         "data": [
           {
@@ -186,19 +214,8 @@
         ],
 
         "scales": [
-          {
-            "name": "y",
-            "type": "band",
-            "domain": [0,1,2,3,4,5,6,7,8],
-            "range": "height",
-            "padding": 0.25
-          },
-          {
-            "name": "x",
-            "type": "linear",
-            "domain": [0, 100],
-            "range": "width"
-          }
+          { "name": "y", "type": "band", "domain": [0,1,2,3,4,5,6,7,8], "range": "height", "padding": 0.25 },
+          { "name": "x", "type": "linear", "domain": [0, 100], "range": "width" }
         ],
 
         "axes": [
@@ -207,7 +224,7 @@
             "orient": "left",
             "title": "Snowfall bin (inches)",
             "values": [0,1,2,3,4,5,6,7,8],
-            "labelExpr": "['<0.1','0.1–1','1–2','2–4','4–6','6–8','8–12','12–18','≥19'][datum.value]",
+            "labelExpr": "['<0.1','0.1–1','1–2','2–4','4–6','6–8','8–12','12–18','≥18'][datum.value]",
             "titleFont": "Georgia",
             "labelFont": "Georgia",
             "titleFontSize": 12
@@ -225,30 +242,30 @@
         "marks": [
           {
             "type": "rect",
-            "from": {"data": "bars"},
+            "from": { "data": "bars" },
             "encode": {
               "enter": {
-                "y": {"scale": "y", "field": "binIndex"},
-                "height": {"scale": "y", "band": true},
-                "x": {"scale": "x", "value": 0},
-                "x2": {"scale": "x", "field": "percentage"},
-                "fill": {"value": "#6b5b95"},
-                "tooltip": {"signal": "datum.bin + ': ' + datum.percentage + '%'"}
+                "y": { "scale": "y", "field": "binIndex" },
+                "height": { "scale": "y", "band": true },
+                "x": { "scale": "x", "value": 0 },
+                "x2": { "scale": "x", "field": "percentage" },
+                "fill": { "value": "#6b5b95" },
+                "tooltip": { "signal": "datum.bin + ': ' + datum.percentage + '%'" }
               }
             }
           },
           {
             "type": "text",
-            "from": {"data": "bars"},
+            "from": { "data": "bars" },
             "encode": {
               "enter": {
-                "y": {"scale": "y", "field": "binIndex", "band": 0.5},
-                "x": {"scale": "x", "field": "percentage", "offset": 5},
-                "text": {"field": "percentage"},
-                "align": {"value": "left"},
-                "baseline": {"value": "middle"},
-                "fill": {"value": "#333"},
-                "fontSize": {"value": 11}
+                "y": { "scale": "y", "field": "binIndex", "band": 0.5 },
+                "x": { "scale": "x", "field": "percentage", "offset": 6 },
+                "text": { "signal": "format(datum.percentage, '.0f') + '%'" },
+                "align": { "value": "left" },
+                "baseline": { "value": "middle" },
+                "fill": { "value": "#333" },
+                "fontSize": { "value": 11 }
               }
             }
           }
@@ -256,53 +273,139 @@
       };
     }
 
-    let currentChartType = 'dots';
+    function renderFromPercents(percents, opts = {}) {
+      const sum = percents.reduce((a, b) => a + b, 0);
+      const allowNot100 = !!opts.allowNot100;
 
-    function renderFromPercents(percents) {
-      const sum = percents.reduce((a,b)=>a+b,0);
-      const warn = document.getElementById("sumWarn");
-
-      // Allow tiny floating error
+      // If < 100, allow preview; dot conversion requires 100-ish, so normalize for preview
       if (Math.abs(sum - 100) > 0.01) {
-        warn.textContent = `Percentages must sum to 100. Current sum: ${sum.toFixed(2)}%`;
-        return;
+        if (!allowNot100) return;
+        percents = (sum > 0) ? percents.map(p => (p / sum) * 100) : percents;
       }
-      warn.textContent = "";
 
       const { dots, counts } = buildDotData(percents);
-      document.getElementById("dotSummary").textContent =
+
+      dotSummaryEl.textContent =
         "Dot mapping (out of 20): " +
         counts.map((c, i) => `${BINS[i].label}=${c}`).join(" • ");
 
-      if (currentChartType === 'dots') {
-        const spec = createDotSpec(dots);
-        vegaEmbed('#view', spec, {actions: false});
+      if (currentChartType === "dots") {
+        vegaEmbed("#view", createDotSpec(dots), { actions: false });
       } else {
-        const spec = createBarSpec(percents);
-        vegaEmbed('#view', spec, {actions: false});
+        vegaEmbed("#view", createBarSpec(percents), { actions: false });
       }
     }
 
-    // Default example (NYT-like)
-    const defaultPercents = [1,6,17,12,11,15,21,12,5]; // sums 100
-    const defaultIds = ["p_lt01","p_01_1","p_1_2","p_2_4","p_4_6","p_6_8","p_8_12","p_12_18","p_ge18"];
-    defaultIds.forEach((id,i)=>document.getElementById(id).value = defaultPercents[i]);
+    function getPercentsFromSliders() {
+      const inputs = sliderContainer.querySelectorAll('input[type="range"]');
+      const map = {};
+      inputs.forEach(inp => map[inp.dataset.key] = parseInt(inp.value, 10) || 0);
+      return BINS.map(b => map[b.key] ?? 0);
+    }
 
-    renderFromPercents(defaultPercents);
+    function makeSliderRow(bin, defaultValue) {
+      const row = document.createElement("div");
+      row.className = "sliderRow";
 
-    document.getElementById("snowForm").addEventListener("submit", function(e){
+      const label = document.createElement("div");
+      label.className = "sliderLabel";
+      label.textContent = `${bin.label} in`;
+
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.min = "0";
+      slider.max = "100";
+      slider.step = "1";
+      slider.value = String(defaultValue ?? 0);
+      slider.dataset.key = bin.key;
+
+      const val = document.createElement("div");
+      val.className = "sliderVal";
+      val.textContent = `${slider.value}%`;
+
+      prev.set(slider, parseInt(slider.value, 10));
+
+      slider.addEventListener("input", () => {
+        const oldVal = prev.get(slider) ?? 0;
+        let newVal = parseInt(slider.value, 10) || 0;
+
+        const delta = newVal - oldVal;
+
+        // increasing one slider is capped by remaining budget
+        if (delta > 0) {
+          const sumWithoutThisOld = totalPercent() - oldVal;
+          const available = 100 - sumWithoutThisOld;
+          const maxAllowed = oldVal + available;
+
+          newVal = clamp(newVal, 0, maxAllowed);
+
+          if (newVal !== parseInt(slider.value, 10)) {
+            slider.value = String(newVal);
+          }
+        }
+
+        prev.set(slider, newVal);
+        val.textContent = `${newVal}%`;
+
+        updateTotalsUI();
+        renderFromPercents(getPercentsFromSliders(), { allowNot100: true });
+      });
+
+      row.appendChild(label);
+      row.appendChild(slider);
+      row.appendChild(val);
+      return row;
+    }
+
+    function setSliders(values) {
+      const inputs = sliderContainer.querySelectorAll('input[type="range"]');
+
+      inputs.forEach(inp => {
+        const key = inp.dataset.key;
+        const idx = BINS.findIndex(b => b.key === key);
+        const v = values[idx] ?? 0;
+
+        inp.value = String(v);
+        prev.set(inp, v);
+
+        const valEl = inp.parentElement.querySelector(".sliderVal");
+        if (valEl) valEl.textContent = `${v}%`;
+      });
+
+      updateTotalsUI();
+      renderFromPercents(getPercentsFromSliders(), { allowNot100: true });
+    }
+
+    function resetAll() {
+      setSliders(new Array(BINS.length).fill(0));
+    }
+
+    // INIT
+    sliderContainer.innerHTML = "";
+    BINS.forEach((bin, i) => sliderContainer.appendChild(makeSliderRow(bin, EXAMPLE[i])));
+
+    updateTotalsUI();
+    renderFromPercents(getPercentsFromSliders(), { allowNot100: true });
+
+    // EVENTS
+    loadExampleBtn.addEventListener("click", () => setSliders(EXAMPLE));
+    resetBtn.addEventListener("click", resetAll);
+
+    document.getElementById("snowForm").addEventListener("submit", (e) => {
       e.preventDefault();
-      const percents = getPercentsFromForm();
-      renderFromPercents(percents);
+      const sum = totalPercent();
+      if (sum !== 100) {
+        sumWarnEl.textContent = `Please allocate exactly 100%. You are at ${sum}%.`;
+        return;
+      }
+      renderFromPercents(getPercentsFromSliders(), { allowNot100: false });
     });
 
-    document.getElementById("toggleChart").addEventListener("click", function(){
-      currentChartType = currentChartType === 'dots' ? 'bars' : 'dots';
-      this.textContent = currentChartType === 'dots' ? 'Show Bar Chart' : 'Show Dot Plot';
-      const percents = getPercentsFromForm();
-      renderFromPercents(percents);
+    toggleChartBtn.addEventListener("click", function () {
+      currentChartType = (currentChartType === "dots") ? "bars" : "dots";
+      this.textContent = (currentChartType === "dots") ? "Show Bar Chart" : "Show Dot Plot";
+      renderFromPercents(getPercentsFromSliders(), { allowNot100: true });
     });
   </script>
-
 </body>
 </html>
