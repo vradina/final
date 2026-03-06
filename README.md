@@ -9,7 +9,7 @@ This project is an interactive web visualization that helps users better interpr
 The quantile dot plot represents the data as hypothetical discrete storms, making snowfall predictions easier to understand. Each dot--or snowflake, in our case--reflects one of 20 possible storms. More details are available in the Process Book.
 
 ## Important Links
-- Live Website with Interactive Visualizations: https://vradina.github.io/final/
+- Live Website with Interactive Visualizations: https://vradina.github.io/final/ 
 - Process Book: https://github.com/vradina/final/blob/main/Process%20Book.pdf
 - Youtube Link: https://youtu.be/Lx7IuddaxDM
 - Explanatory Screencast: https://www.loom.com/share/f0ab4ab727f4434d9e9eeb2dd2452a67
