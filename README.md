@@ -21,3 +21,18 @@ main.css - outlines our custom styling for our website
 Vega - used to generate the quantile dot plot  
 
 PicoCSS - offers basic layout and form styling
+
+## References
+Bhatia, A., Katz, J., Sanger-Katz, M., & Jacoby, S. (2026, March 5). How Much Snow Will Fall Where You Live? The Upshot Newsletter. https://www.nytimes.com/interactive/2026/upshot/snow-forecast-totals-lookup.html  
+
+Carroll, C. (2019, December 19). Quantile Dot Plots—Showcase. Matplotlib. https://discourse.matplotlib.org/t/quantile-dot-plots/20775  
+
+Ibrekk, H., & Morgan, M. G. (1987). Graphical Communication of Uncertain Quantities to Nontechnical People. An Official Publication of the Society for Risk Analysis, 7(4). https://doi.org/10.1111/j.1539-6924.1987.tb00488.x  
+
+Kay, M., Kola, T., Hullman, J. R., & Munson, S. A. (2016). When (ish) is My Bus?: User-centered Visualizations of Uncertainty in Everyday, Mobile Predictive Systems. ACM Conferences, 5093–5103. https://doi.org/10.1145/2858036.2858558  
+
+McKenna, S., & Harrison, L. (n.d.). Designing Visualizations. Retrieved March 5, 2026, from https://canvas.wpi.edu/courses/80901/files?preview=8245390  
+
+National Centers for Environmental Information. (n.d.). Climate Data Online Search. National Oceanic and Atmospheric Administration. Retrieved March 5, 2026, from https://www.ncdc.noaa.gov/cdo-web/search  
+
+Quantile Dot Plot Example. (n.d.). Vega. Retrieved March 5, 2026, from https://vega.github.io/vega/examples/quantile-dot-plot/
