@@ -11,6 +11,7 @@ The quantile dot plot represents the data as hypothetical discrete storms, makin
 ## Important Links
 - Live Website with Interactive Visualizations: https://vradina.github.io/final/
 - Process Book: https://github.com/vradina/final/blob/main/Process%20Book.pdf
+- Youtube Link: https://youtu.be/Lx7IuddaxDM
 - Explanatory Screencast: https://www.loom.com/share/f0ab4ab727f4434d9e9eeb2dd2452a67
 
 ## Code Structure and Libraries
