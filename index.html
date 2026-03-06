@@ -156,7 +156,7 @@
 
         "scales": [
           { "name": "x", "type": "linear", "domain": [-0.5, N_DOTS - 0.5], "range": "width" },
-          { "name": "y", "type": "band", "domain": [0,1,2,3,4,5,6,7,8], "range": "height", "padding": 0.25 }
+          { "name": "y", "type": "band", "domain": ["<0.1","0.1–1","1–2","2–4","4–6","6–8","8–12","12–18","≥18"], "range": "height", "padding": 0.25 }
         ],
 
         "axes": [
@@ -164,8 +164,6 @@
             "scale": "y",
             "orient": "left",
             "title": "Snowfall bin (inches)",
-            "values": [0,1,2,3,4,5,6,7,8],
-            "labelExpr": "['<0.1','0.1–1','1–2','2–4','4–6','6–8','8–12','12–18','≥18'][datum.value]",
             "titleFont": "Georgia",
             "labelFont": "Georgia",
             "titleFontSize": 12
@@ -183,19 +181,19 @@
 
         "marks": [
           {
-            "type": "symbol",
+            "type": "text",
             "from": { "data": "dots" },
             "encode": {
               "enter": {
                 "x": { "scale": "x", "field": "pos" },
-                "y": { "scale": "y", "field": "binIndex", "band": 0.5 },
-                "size": { "value": 220 },
+                "y": { "scale": "y", "field": "bin", "band": 0.5 },
+                "text": { "value": "❄" },
+                "fontSize": { "value": 20 },
                 "fill": { "value": "#6b5b95" },
-                "stroke": { "value": "white" },
-                "strokeWidth": { "value": 1.2 },
+                "align": { "value": "center" },
+                "baseline": { "value": "middle" },
                 "tooltip": {
-                  "signal":
-                    "datum.bin + ': ' + datum.p + '% (≈ ' + round(datum.p * " + N_DOTS + " / 100) + ' of " + N_DOTS + ")'"
+                  "signal": "datum.bin + ': ' + datum.p + '% (≈ ' + round(datum.p * " + N_DOTS + " / 100) + ' of " + N_DOTS + ")'"
                 }
               }
             }
@@ -223,7 +221,7 @@
         ],
 
         "scales": [
-          { "name": "y", "type": "band", "domain": [0,1,2,3,4,5,6,7,8], "range": "height", "padding": 0.25 },
+          { "name": "y", "type": "band", "domain": ["<0.1","0.1–1","1–2","2–4","4–6","6–8","8–12","12–18","≥18"], "range": "height", "padding": 0.25 },
           { "name": "x", "type": "linear", "domain": [0, 100], "range": "width" }
         ],
 
@@ -232,8 +230,6 @@
             "scale": "y",
             "orient": "left",
             "title": "Snowfall bin (inches)",
-            "values": [0,1,2,3,4,5,6,7,8],
-            "labelExpr": "['<0.1','0.1–1','1–2','2–4','4–6','6–8','8–12','12–18','≥18'][datum.value]",
             "titleFont": "Georgia",
             "labelFont": "Georgia",
             "titleFontSize": 12
@@ -254,7 +250,7 @@
             "from": { "data": "bars" },
             "encode": {
               "enter": {
-                "y": { "scale": "y", "field": "binIndex" },
+                "y": { "scale": "y", "field": "bin" },
                 "height": { "scale": "y", "band": true },
                 "x": { "scale": "x", "value": 0 },
                 "x2": { "scale": "x", "field": "percentage" },
@@ -268,7 +264,7 @@
             "from": { "data": "bars" },
             "encode": {
               "enter": {
-                "y": { "scale": "y", "field": "binIndex", "band": 0.5 },
+                "y": { "scale": "y", "field": "bin", "band": 0.5 },
                 "x": { "scale": "x", "field": "percentage", "offset": 6 },
                 "text": { "signal": "format(datum.percentage, '.0f') + '%'" },
                 "align": { "value": "left" },
@@ -418,3 +414,19 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
